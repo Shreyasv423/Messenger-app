@@ -21,7 +21,10 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 <Text style={[styles.text, isOwn ? styles.ownText : styles.otherText]}>
                     {message.content}
                 </Text>
-                <Text style={[styles.time, isOwn ? styles.ownTime : styles.otherTime]}>{time}</Text>
+                <View style={styles.footerRow}>
+                    <Text style={[styles.time, isOwn ? styles.ownTime : styles.otherTime]}>{time}</Text>
+                    {isOwn && <Text style={styles.readIcon}>✓✓</Text>}
+                </View>
             </View>
         </View>
     );
@@ -29,8 +32,9 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: SPACING.md,
-        marginVertical: 2,
+        paddingHorizontal: 12,
+        marginVertical: 4,
+        width: '100%',
     },
     ownContainer: {
         alignItems: 'flex-end',
@@ -39,38 +43,56 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     bubble: {
-        maxWidth: '78%',
-        paddingHorizontal: SPACING.md,
-        paddingVertical: SPACING.sm + 2,
-        borderRadius: 20,
+        maxWidth: '85%',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 22,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     ownBubble: {
         backgroundColor: COLORS.accent,
-        borderBottomRightRadius: 6,
+        borderBottomRightRadius: 4,
     },
     otherBubble: {
-        backgroundColor: COLORS.received,
-        borderBottomLeftRadius: 6,
+        backgroundColor: COLORS.surfaceLight,
+        borderBottomLeftRadius: 4,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     text: {
-        fontSize: 15,
-        lineHeight: 20,
+        fontSize: 16,
+        lineHeight: 22,
+        fontWeight: '500',
     },
     ownText: {
-        color: '#ffffff',
+        color: '#FFFFFF',
     },
     otherText: {
         color: COLORS.text,
     },
-    time: {
-        fontSize: 11,
+    footerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
         marginTop: 4,
+        gap: 4,
+    },
+    time: {
+        fontSize: 10,
+        fontWeight: '600',
     },
     ownTime: {
         color: 'rgba(255,255,255,0.7)',
-        textAlign: 'right',
     },
     otherTime: {
-        color: COLORS.textMuted,
+        color: COLORS.textSecondary,
+    },
+    readIcon: {
+        fontSize: 10,
+        color: 'rgba(255,255,255,0.8)',
     },
 });

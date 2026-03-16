@@ -1,32 +1,32 @@
-export const SECRET_PIN = '28022012';
+export const SECRET_PIN = '27022012';
 
 export const COLORS = {
-    // Dark theme
-    background: '#0a0a0a',
-    surface: '#1a1a2e',
-    surfaceLight: '#16213e',
-    primary: '#0f3460',
-    accent: '#e94560',
-    accentLight: '#ff6b81',
-    text: '#ffffff',
-    textSecondary: '#a0a0b0',
-    textMuted: '#6c6c7e',
-    border: '#2a2a3e',
-    inputBg: '#1e1e32',
-    sent: '#e94560',
-    received: '#1e1e32',
-    success: '#00c853',
-    warning: '#ffab00',
-    error: '#ff1744',
+    // Midnight Glow Theme
+    background: '#05070A',
+    surface: '#0F131A',
+    surfaceLight: '#161B22',
+    primary: '#38BDF8', // Sky blue
+    accent: '#818CF8',  // Indigo/Violet
+    accentGradient: ['#818CF8', '#C084FC'],
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textMuted: '#475569',
+    border: '#1E293B',
+    inputBg: '#0F172A',
+    sent: '#818CF8',
+    received: '#1E293B',
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
 
-    // Calculator colors
+    // Calculator colors (Classic Dark)
     calcBg: '#000000',
     calcDisplay: '#000000',
-    calcBtnNumber: '#333333',
-    calcBtnOperator: '#ff9f0a',
-    calcBtnSpecial: '#a5a5a5',
-    calcBtnText: '#ffffff',
-    calcBtnOperatorText: '#ffffff',
+    calcBtnNumber: '#262626',
+    calcBtnOperator: '#F59E0B',
+    calcBtnSpecial: '#737373',
+    calcBtnText: '#FFFFFF',
+    calcBtnOperatorText: '#FFFFFF',
     calcBtnSpecialText: '#000000',
 };
 

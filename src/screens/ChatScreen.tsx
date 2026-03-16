@@ -9,6 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../utils/constants';
 import { Message, ChatStackParamList, User } from '../types';
 import { getMessages, sendMessage, subscribeToMessages, unsubscribe } from '../services/messageService';
@@ -28,24 +29,7 @@ export default function ChatScreen({ navigation, route }: Props) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [userId, setUserId] = useState<string>('');
     const flatListRef = useRef<FlatList>(null);
-
-    useEffect(() => {
-        navigation.setOptions({
-            headerTitle: () => (
-                <View style={styles.headerTitle}>
-                    <View style={styles.headerAvatar}>
-                        <Text style={styles.headerAvatarText}>
-                            {otherUser.username[0].toUpperCase()}
-                        </Text>
-                    </View>
-                    <View>
-                        <Text style={styles.headerName}>{otherUser.username}</Text>
-                        <Text style={styles.headerStatus}>Online</Text>
-                    </View>
-                </View>
-            ),
-        });
-    }, [navigation, otherUser]);
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         let channelRef: any = null;
@@ -53,16 +37,13 @@ export default function ChatScreen({ navigation, route }: Props) {
         const init = async () => {
             const user = await getCurrentUser();
             if (!user) return;
-            setUserId(user.id);
+            setUserId(user.uid);
 
-            // Load existing messages
             const existingMessages = await getMessages(chatId);
             setMessages(existingMessages);
 
-            // Subscribe to new messages
             channelRef = subscribeToMessages(chatId, (newMessage) => {
                 setMessages((prev) => {
-                    // Prevent duplicates
                     if (prev.find((m) => m.id === newMessage.id)) return prev;
                     return [...prev, newMessage];
                 });
@@ -72,16 +53,13 @@ export default function ChatScreen({ navigation, route }: Props) {
         init();
 
         return () => {
-            if (channelRef) {
-                unsubscribe(channelRef);
-            }
+            if (channelRef) unsubscribe(channelRef);
         };
     }, [chatId]);
 
     const handleSend = async (content: string) => {
         try {
             const newMsg = await sendMessage(chatId, userId, content);
-            // Optimistic update (will be deduped by realtime)
             setMessages((prev) => {
                 if (prev.find((m) => m.id === newMsg.id)) return prev;
                 return [...prev, newMsg];
@@ -96,11 +74,45 @@ export default function ChatScreen({ navigation, route }: Props) {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('ChatList' as any);
+                        }
+                    }}
+                    style={styles.backBtn}
+                >
+                    <Ionicons name="chevron-back" size={28} color={COLORS.text} />
+                </TouchableOpacity>
+                <View style={styles.headerProfile}>
+                    <View style={[styles.headerAvatar, { backgroundColor: COLORS.surfaceLight }]}>
+                        <Text style={styles.headerAvatarText}>
+                            {otherUser.username[0].toUpperCase()}
+                        </Text>
+                    </View>
+                    <View>
+                        <Text style={styles.headerName}>{otherUser.username}</Text>
+                        <Text style={styles.headerStatus}>Online</Text>
+                    </View>
+                </View>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                        <Ionicons name="call-outline" size={20} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(129, 140, 248, 0.1)' }]}>
+                        <Ionicons name="videocam-outline" size={22} color={COLORS.accent} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
             <KeyboardAvoidingView
-                style={styles.container}
+                style={styles.flex}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={90}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
                 <FlatList
                     ref={flatListRef}
@@ -108,71 +120,116 @@ export default function ChatScreen({ navigation, route }: Props) {
                     renderItem={renderMessage}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.messageList}
-                    onContentSizeChange={() =>
-                        flatListRef.current?.scrollToEnd({ animated: true })
-                    }
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                     ListEmptyComponent={
                         <View style={styles.empty}>
-                            <Text style={styles.emptyText}>No messages yet</Text>
-                            <Text style={styles.emptySubtext}>Say hello! 👋</Text>
+                            <View style={styles.emptyIconCircle}>
+                                <Ionicons name="chatbubbles-outline" size={60} color={COLORS.textMuted} />
+                            </View>
+                            <Text style={styles.emptyText}>Start a Secret Chat</Text>
+                            <Text style={styles.emptySubtext}>Messages are end-to-end encrypted</Text>
                         </View>
                     }
                 />
                 <ChatInput onSend={handleSend} />
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 }
+
+import { Ionicons } from '@expo/vector-icons';
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    headerTitle: {
+    flex: {
+        flex: 1,
+    },
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: COLORS.background,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(148, 163, 184, 0.05)',
+    },
+    backBtn: {
+        padding: 4,
+    },
+    headerProfile: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 12,
     },
     headerAvatar: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        backgroundColor: COLORS.accent,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginRight: 12,
     },
     headerAvatarText: {
-        color: '#fff',
-        fontSize: 14,
+        color: COLORS.primary,
+        fontSize: 20,
         fontWeight: '700',
     },
     headerName: {
         color: COLORS.text,
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 18,
+        fontWeight: '700',
     },
     headerStatus: {
         color: COLORS.success,
         fontSize: 12,
+        fontWeight: '600',
+        marginTop: 1,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    actionBtn: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     messageList: {
-        paddingVertical: SPACING.sm,
+        paddingVertical: 10,
+        paddingHorizontal: 8,
+        paddingBottom: 20, // Space for the input bar
     },
     empty: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 100,
+        paddingTop: 120,
+    },
+    emptyIconCircle: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: COLORS.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
     },
     emptyText: {
-        color: COLORS.textSecondary,
-        fontSize: 18,
-        fontWeight: '500',
-        marginBottom: 4,
+        color: COLORS.text,
+        fontSize: 22,
+        fontWeight: '800',
+        marginBottom: 8,
     },
     emptySubtext: {
-        color: COLORS.textMuted,
-        fontSize: 14,
+        color: COLORS.textSecondary,
+        fontSize: 15,
+        fontWeight: '500',
     },
 });

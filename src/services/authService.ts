@@ -1,44 +1,46 @@
-import { supabase } from '../config/supabase';
+import { auth, db } from '../config/firebase';
+import { 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut as firebaseSignOut,
+    onAuthStateChanged,
+    User as FirebaseUser
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export async function signUp(email: string, password: string, username: string) {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-    });
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('Sign up failed');
+    if (!user) throw new Error('Sign up failed');
 
-    const { error: profileError } = await supabase.from('users').insert({
-        id: authData.user.id,
+    // Create user profile in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+        id: user.uid,
         username,
+        email,
+        created_at: new Date().toISOString(),
     });
 
-    if (profileError) throw profileError;
-
-    return authData;
+    return user;
 }
 
 export async function signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    });
-
-    if (error) throw error;
-    return data;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
 }
 
 export async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await firebaseSignOut(auth);
 }
 
 export async function getCurrentUser() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.user ?? null;
+    return auth.currentUser;
 }
 
 export function onAuthStateChange(callback: (event: string, session: any) => void) {
-    return supabase.auth.onAuthStateChange(callback);
+    return onAuthStateChanged(auth, (user) => {
+        // Map Firebase user to a structure similar to what the app expects
+        callback(user ? 'SIGNED_IN' : 'SIGNED_OUT', user ? { user } : null);
+    });
 }

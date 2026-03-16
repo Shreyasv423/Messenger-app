@@ -10,7 +10,7 @@ type Props = {
 
 export default function SplashScreen({ navigation }: Props) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const scaleAnim = useRef(new Animated.Value(0.8)).current;
+    const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
     useEffect(() => {
         Animated.parallel([
@@ -21,14 +21,15 @@ export default function SplashScreen({ navigation }: Props) {
             }),
             Animated.spring(scaleAnim, {
                 toValue: 1,
-                friction: 4,
+                tension: 20,
+                friction: 7,
                 useNativeDriver: true,
             }),
         ]).start();
 
         const timer = setTimeout(() => {
             navigation.replace('Calculator');
-        }, 2000);
+        }, 1500);
 
         return () => clearTimeout(timer);
     }, []);
@@ -37,50 +38,67 @@ export default function SplashScreen({ navigation }: Props) {
         <View style={styles.container}>
             <Animated.View
                 style={[
-                    styles.iconContainer,
+                    styles.content,
                     { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
                 ]}
             >
-                <View style={styles.icon}>
-                    <Text style={styles.iconText}>🔢</Text>
+                <View style={styles.logoBadge}>
+                    <Ionicons name="calculator" size={60} color="#fff" />
                 </View>
                 <Text style={styles.title}>Calculator</Text>
-                <Text style={styles.subtitle}>Simple & Fast</Text>
+                <Text style={styles.tagline}>Standard Edition</Text>
+            </Animated.View>
+
+            <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+                <Text style={styles.versionText}>System v2.4.1</Text>
             </Animated.View>
         </View>
     );
 }
 
+import { Ionicons } from '@expo/vector-icons';
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.calcBg,
+        backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    iconContainer: {
+    content: {
         alignItems: 'center',
     },
-    icon: {
-        width: 100,
-        height: 100,
-        borderRadius: 24,
-        backgroundColor: COLORS.calcBtnNumber,
+    logoBadge: {
+        width: 120,
+        height: 120,
+        borderRadius: 30,
+        backgroundColor: '#333333',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
-    },
-    iconText: {
-        fontSize: 48,
+        marginBottom: 24,
     },
     title: {
-        color: COLORS.text,
-        fontSize: 28,
-        fontWeight: '700',
-        marginBottom: 6,
+        color: '#FFFFFF',
+        fontSize: 32,
+        fontWeight: '600',
+        letterSpacing: 0.5,
+        marginBottom: 8,
     },
-    subtitle: {
-        color: COLORS.textMuted,
-        fontSize: 16,
+    tagline: {
+        color: '#666666',
+        fontSize: 14,
+        fontWeight: '400',
+        letterSpacing: 0.5,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 50,
+        alignItems: 'center',
+    },
+    versionText: {
+        color: '#222222',
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 1,
     },
 });

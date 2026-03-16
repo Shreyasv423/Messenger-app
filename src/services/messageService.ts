@@ -1,16 +1,33 @@
-import { supabase } from '../config/supabase';
+import { db } from '../config/firebase';
 import { Message } from '../types';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    getDocs, 
+    addDoc, 
+    onSnapshot, 
+    doc, 
+    updateDoc, 
+    serverTimestamp,
+    Timestamp 
+} from 'firebase/firestore';
 
 export async function getMessages(chatId: string): Promise<Message[]> {
-    const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: true });
+    const messagesRef = collection(db, 'messages');
+    const q = query(
+        messagesRef,
+        where('chat_id', '==', chatId),
+        orderBy('created_at', 'asc')
+    );
 
-    if (error) throw error;
-    return data || [];
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        created_at: (doc.data().created_at as Timestamp)?.toDate().toISOString() || new Date().toISOString()
+    } as Message));
 }
 
 export async function sendMessage(
@@ -18,52 +35,55 @@ export async function sendMessage(
     senderId: string,
     content: string
 ): Promise<Message> {
-    const { data, error } = await supabase
-        .from('messages')
-        .insert({
-            chat_id: chatId,
-            sender_id: senderId,
-            content: content.trim(),
-        })
-        .select()
-        .single();
+    const messagesRef = collection(db, 'messages');
+    const newMessage = {
+        chat_id: chatId,
+        sender_id: senderId,
+        content: content.trim(),
+        created_at: serverTimestamp(),
+        is_read: false,
+    };
 
-    if (error) throw error;
-    return data;
+    const docRef = await addDoc(messagesRef, newMessage);
+    return { 
+        id: docRef.id, 
+        ...newMessage, 
+        created_at: new Date().toISOString() 
+    } as Message;
 }
 
 export function subscribeToMessages(
     chatId: string,
     onNewMessage: (message: Message) => void
-): RealtimeChannel {
-    const channel = supabase
-        .channel(`messages:${chatId}`)
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'messages',
-                filter: `chat_id=eq.${chatId}`,
-            },
-            (payload) => {
-                onNewMessage(payload.new as Message);
-            }
-        )
-        .subscribe();
+): () => void {
+    const messagesRef = collection(db, 'messages');
+    const q = query(
+        messagesRef,
+        where('chat_id', '==', chatId),
+        orderBy('created_at', 'asc')
+    );
 
-    return channel;
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+                const data = change.doc.data();
+                onNewMessage({ 
+                    id: change.doc.id, 
+                    ...data,
+                    created_at: (data.created_at as Timestamp)?.toDate().toISOString() || new Date().toISOString()
+                } as Message);
+            }
+        });
+    });
+
+    return unsubscribe;
 }
 
 export async function markAsRead(messageId: string): Promise<void> {
-    const { error } = await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('id', messageId);
-
-    if (error) throw error;
+    const docRef = doc(db, 'messages', messageId);
+    await updateDoc(docRef, { is_read: true });
 }
 
-export function unsubscribe(channel: RealtimeChannel): void {
-    supabase.removeChannel(channel);
+export function unsubscribe(unsubscribeFn: () => void): void {
+    unsubscribeFn();
 }

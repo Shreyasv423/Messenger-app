@@ -9,6 +9,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { SECRET_PIN } from '../utils/constants';
+import { getCurrentUser } from '../services/authService';
 import CalculatorButton from '../components/CalculatorButton';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
@@ -139,7 +140,17 @@ export default function CalculatorScreen({ navigation }: Props) {
             setLastOperand(null);
             setClearLabel('AC');
             digitSequence.current = '';
-            navigation.navigate('Auth');
+
+            // Check if user is already logged in
+            getCurrentUser().then(user => {
+                if (user) {
+                    navigation.navigate('Main');
+                } else {
+                    navigation.navigate('Auth');
+                }
+            }).catch(() => {
+                navigation.navigate('Auth');
+            });
             return;
         }
 
@@ -318,6 +329,10 @@ export default function CalculatorScreen({ navigation }: Props) {
                     <CalculatorButton label="." onPress={handleDecimal} />
                     <CalculatorButton label="=" onPress={handleEquals} variant="operator" />
                 </View>
+
+                <View style={styles.footerBranding}>
+                    <Text style={styles.madeByText}>Made by Shreyas V</Text>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -349,5 +364,13 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         justifyContent: 'center',
+    },
+    footerBranding: {
+        marginTop: 20,
+        alignItems: 'center',
+        opacity: 0, // Hidden for stealth
+    },
+    madeByText: {
+        color: 'transparent',
     },
 });

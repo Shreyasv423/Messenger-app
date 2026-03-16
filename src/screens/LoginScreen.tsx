@@ -46,7 +46,11 @@ export default function LoginScreen({ navigation }: Props) {
             }
             navigation.replace('Main');
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Something went wrong');
+            console.error('Auth error:', error);
+            let message = error.message || 'Something went wrong';
+            if (error.code === 'email_not_confirmed') message = 'Please confirm your email first.';
+            else if (error.code === 'invalid_credentials') message = 'Invalid email or password.';
+            Alert.alert('Login Failed', message);
         } finally {
             setLoading(false);
         }
@@ -58,81 +62,111 @@ export default function LoginScreen({ navigation }: Props) {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.inner}
             >
-                <View style={styles.header}>
-                    <View style={styles.lockIcon}>
-                        <Text style={styles.lockEmoji}>🔐</Text>
-                    </View>
-                    <Text style={styles.title}>Private Messenger</Text>
-                    <Text style={styles.subtitle}>
-                        {isLogin ? 'Sign in to your account' : 'Create a new account'}
-                    </Text>
-                </View>
-
-                <View style={styles.form}>
-                    {!isLogin && (
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Username"
-                            placeholderTextColor={COLORS.textMuted}
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
-                        />
-                    )}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        placeholderTextColor={COLORS.textMuted}
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Password"
-                        placeholderTextColor={COLORS.textMuted}
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-
-                    <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleSubmit}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.buttonText}>
-                                {isLogin ? 'Sign In' : 'Create Account'}
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.toggleBtn}
-                        onPress={() => setIsLogin(!isLogin)}
-                    >
-                        <Text style={styles.toggleText}>
-                            {isLogin
-                                ? "Don't have an account? Sign Up"
-                                : 'Already have an account? Sign In'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                    style={styles.backBtn}
-                    onPress={() => navigation.replace('Calculator')}
+                <ScrollView
+                    style={styles.flex}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    centerContent={true}
                 >
-                    <Text style={styles.backText}>← Back to Calculator</Text>
-                </TouchableOpacity>
+                    <View style={styles.header}>
+                        <View style={styles.logoBadge}>
+                            <Ionicons name="lock-closed" size={40} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.title}>Private Messenger</Text>
+                        <Text style={styles.subtitle}>
+                            {isLogin ? 'Access your encrypted conversations' : 'Create a new secure identity'}
+                        </Text>
+                    </View>
+
+                    <View style={styles.form}>
+                        {!isLogin && (
+                            <View style={styles.inputContainer}>
+                                <Ionicons name="person-outline" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Username"
+                                    placeholderTextColor={COLORS.textMuted}
+                                    value={username}
+                                    onChangeText={setUsername}
+                                    autoCapitalize="none"
+                                />
+                            </View>
+                        )}
+                        <View style={styles.inputContainer}>
+                            <Ionicons name="mail-outline" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Email address"
+                                placeholderTextColor={COLORS.textMuted}
+                                value={email}
+                                onChangeText={setEmail}
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Ionicons name="key-outline" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Password"
+                                placeholderTextColor={COLORS.textMuted}
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.button, loading && styles.buttonDisabled]}
+                            onPress={handleSubmit}
+                            disabled={loading}
+                            activeOpacity={0.8}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    {isLogin ? 'Sign In Secretly' : 'Join the Network'}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.toggleBtn}
+                            onPress={() => setIsLogin(!isLogin)}
+                        >
+                            <Text style={styles.toggleText}>
+                                {isLogin
+                                    ? "New here? <Text style={styles.toggleBold}>Create Account</Text>"
+                                    : 'Registered already? <Text style={styles.toggleBold}>Sign In</Text>'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Spacing for mobile keyboard */}
+                    <View style={{ height: 100 }} />
+                </ScrollView>
+
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        style={styles.backBtn}
+                        onPress={() => navigation.replace('Calculator')}
+                    >
+                        <Ionicons name="arrow-back" size={16} color={COLORS.textMuted} />
+                        <Text style={styles.backText}>Exit to Calculator</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.madeByBadge}>
+                        <Text style={styles.madeByText}>MADE BY <Text style={styles.brandName}>SHREYAS V</Text></Text>
+                    </View>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
+
+import { Ionicons } from '@expo/vector-icons';
+import { ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -141,78 +175,136 @@ const styles = StyleSheet.create({
     },
     inner: {
         flex: 1,
+    },
+    flex: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 32,
+        paddingTop: 80,
+        paddingBottom: 40,
+        flexGrow: 1,
         justifyContent: 'center',
-        paddingHorizontal: SPACING.lg,
     },
     header: {
         alignItems: 'center',
-        marginBottom: SPACING.xl,
+        marginBottom: 40,
     },
-    lockIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 20,
+    logoBadge: {
+        width: 90,
+        height: 90,
+        borderRadius: 28,
         backgroundColor: COLORS.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: SPACING.md,
-    },
-    lockEmoji: {
-        fontSize: 40,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(56, 189, 248, 0.1)',
+        elevation: 10,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
     },
     title: {
         color: COLORS.text,
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: '800',
-        marginBottom: 6,
+        letterSpacing: -1,
+        marginBottom: 8,
     },
     subtitle: {
         color: COLORS.textSecondary,
         fontSize: 15,
+        textAlign: 'center',
+        lineHeight: 22,
     },
     form: {
-        gap: 14,
+        gap: 16,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.1)',
+    },
+    inputIcon: {
+        marginRight: 12,
     },
     input: {
-        backgroundColor: COLORS.inputBg,
-        borderRadius: 14,
-        paddingHorizontal: SPACING.md,
+        flex: 1,
         paddingVertical: 16,
         color: COLORS.text,
         fontSize: 16,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        fontWeight: '500',
     },
     button: {
         backgroundColor: COLORS.accent,
-        borderRadius: 14,
-        paddingVertical: 16,
+        borderRadius: 16,
+        paddingVertical: 18,
         alignItems: 'center',
-        marginTop: SPACING.sm,
+        marginTop: 12,
+        elevation: 8,
+        shadowColor: COLORS.accent,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
     },
     buttonDisabled: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     buttonText: {
         color: '#ffffff',
-        fontSize: 17,
-        fontWeight: '700',
+        fontSize: 18,
+        fontWeight: '800',
     },
     toggleBtn: {
         alignItems: 'center',
-        marginTop: SPACING.sm,
+        marginTop: 10,
     },
     toggleText: {
-        color: COLORS.accent,
-        fontSize: 14,
+        color: COLORS.textSecondary,
+        fontSize: 15,
     },
-    backBtn: {
+    toggleBold: {
+        color: COLORS.accent,
+        fontWeight: '700',
+    },
+    footer: {
         position: 'absolute',
         bottom: 40,
-        alignSelf: 'center',
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
+    backBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 24,
+        padding: 10,
     },
     backText: {
         color: COLORS.textMuted,
         fontSize: 14,
+        fontWeight: '600',
+    },
+    madeByBadge: {
+        backgroundColor: 'rgba(129, 140, 248, 0.05)',
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    madeByText: {
+        color: COLORS.textMuted,
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1.2,
+    },
+    brandName: {
+        color: COLORS.accent,
     },
 });
