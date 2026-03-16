@@ -9,15 +9,16 @@ import {
     Alert,
     ActivityIndicator,
     Platform,
+    ScrollView,
+    StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../utils/constants';
 import { User } from '../types';
 import { getProfile, updateProfile } from '../services/userService';
 import { getCurrentUser, signOut } from '../services/authService';
 import { formatDate, getInitials } from '../utils/helpers';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
@@ -56,7 +57,7 @@ export default function ProfileScreen() {
             });
             setProfile(updated);
             setEditingUsername(false);
-            Alert.alert('Success', 'Profile updated successfully');
+            Alert.alert('Success', 'Secure Identity Updated');
         } catch (error: any) {
             Alert.alert('Error', error.message);
         } finally {
@@ -65,10 +66,10 @@ export default function ProfileScreen() {
     };
 
     const handleSignOut = async () => {
-        Alert.alert('Sign Out', 'Are you sure you want to exit your profile?', [
+        Alert.alert('De-authenticate', 'Disconnect this node from the network?', [
             { text: 'Cancel', style: 'cancel' },
             {
-                text: 'Sign Out',
+                text: 'Disconnect',
                 style: 'destructive',
                 onPress: async () => {
                     try {
@@ -97,8 +98,13 @@ export default function ProfileScreen() {
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
+            <StatusBar barStyle="light-content" />
+            
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Account</Text>
+                <Text style={styles.headerTitle}>System Node</Text>
+                <View style={styles.nodeBadge}>
+                    <Text style={styles.nodeBadgeText}>ACTIVE SESSION</Text>
+                </View>
             </View>
 
             <ScrollView
@@ -114,7 +120,7 @@ export default function ProfileScreen() {
                             </Text>
                         </View>
                         <TouchableOpacity style={styles.avatarEditBtn}>
-                            <Ionicons name="camera" size={18} color="#fff" />
+                            <Ionicons name="shield" size={16} color="#fff" />
                         </TouchableOpacity>
                     </View>
 
@@ -124,7 +130,7 @@ export default function ProfileScreen() {
                                 style={styles.editInput}
                                 value={newUsername}
                                 onChangeText={setNewUsername}
-                                placeholder="Username"
+                                placeholder="Edit Identity"
                                 placeholderTextColor={COLORS.textMuted}
                                 autoFocus
                             />
@@ -137,7 +143,7 @@ export default function ProfileScreen() {
                                     {saving ? (
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
-                                        <Text style={styles.saveBtnText}>Save Changes</Text>
+                                        <Text style={styles.saveBtnText}>Update</Text>
                                     )}
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -153,25 +159,27 @@ export default function ProfileScreen() {
                         </View>
                     ) : (
                         <View style={styles.userNameSection}>
-                            <Text style={styles.username}>{profile?.username || 'Unknown'}</Text>
+                            <Text style={styles.username}>{profile?.username || 'Unknown Node'}</Text>
                             <TouchableOpacity
                                 style={styles.editNameBtn}
                                 onPress={() => setEditingUsername(true)}
                             >
-                                <Ionicons name="pencil" size={14} color={COLORS.primary} />
-                                <Text style={styles.editBtnText}>Edit Profile</Text>
+                                <Ionicons name="finger-print-outline" size={14} color={COLORS.primary} />
+                                <Text style={styles.editBtnText}>Modify Node Identity</Text>
                             </TouchableOpacity>
                         </View>
                     )}
                 </View>
 
                 <View style={styles.settingsSection}>
-                    <Text style={styles.sectionLabel}>Personal Information</Text>
+                    <Text style={styles.sectionLabel}>Node Configuration</Text>
                     <View style={styles.settingsCard}>
                         <View style={styles.settingItem}>
-                            <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={styles.settingIcon} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                                <Ionicons name="hardware-chip-outline" size={20} color={COLORS.primary} />
+                            </View>
                             <View style={styles.settingContent}>
-                                <Text style={styles.settingLabel}>Joined Messenger</Text>
+                                <Text style={styles.settingLabel}>Entry Date</Text>
                                 <Text style={styles.settingValue}>
                                     {profile ? formatDate(profile.created_at) : '—'}
                                 </Text>
@@ -179,9 +187,11 @@ export default function ProfileScreen() {
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.settingItem}>
-                            <Ionicons name="key-outline" size={20} color={COLORS.accent} style={styles.settingIcon} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(129, 140, 248, 0.1)' }]}>
+                                <Ionicons name="finger-print" size={20} color={COLORS.accent} />
+                            </View>
                             <View style={styles.settingContent}>
-                                <Text style={styles.settingLabel}>Security ID</Text>
+                                <Text style={styles.settingLabel}>Node UUID</Text>
                                 <Text style={styles.settingValue} numberOfLines={1}>
                                     {profile?.id}
                                 </Text>
@@ -189,22 +199,26 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
-                    <Text style={styles.sectionLabel}>Preferences</Text>
+                    <Text style={styles.sectionLabel}>Security Protocol</Text>
                     <View style={styles.settingsCard}>
                         <TouchableOpacity style={styles.settingItem}>
-                            <Ionicons name="notifications-outline" size={20} color={COLORS.success} style={styles.settingIcon} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                                <Ionicons name="notifications-outline" size={20} color={COLORS.success} />
+                            </View>
                             <View style={styles.settingContent}>
-                                <Text style={styles.settingLabel}>Notifications</Text>
-                                <Text style={styles.settingValue}>Enabled</Text>
+                                <Text style={styles.settingLabel}>Alerts</Text>
+                                <Text style={styles.settingValue}>Encrypted Signals</Text>
                             </View>
                             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
                         </TouchableOpacity>
                         <View style={styles.divider} />
                         <TouchableOpacity style={styles.settingItem}>
-                            <Ionicons name="lock-closed-outline" size={20} color={COLORS.warning} style={styles.settingIcon} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                                <Ionicons name="lock-closed-outline" size={20} color={COLORS.warning} />
+                            </View>
                             <View style={styles.settingContent}>
-                                <Text style={styles.settingLabel}>Privacy & Security</Text>
-                                <Text style={styles.settingValue}>Encrypted</Text>
+                                <Text style={styles.settingLabel}>Encryption</Text>
+                                <Text style={styles.settingValue}>AES-256 Enabled</Text>
                             </View>
                             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
                         </TouchableOpacity>
@@ -212,23 +226,18 @@ export default function ProfileScreen() {
                 </View>
 
                 <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
-                    <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
-                    <Text style={styles.signOutText}>Sign Out of Messenger</Text>
+                    <Ionicons name="power-outline" size={20} color={COLORS.error} />
+                    <Text style={styles.signOutText}>Disconnect and Cloak</Text>
                 </TouchableOpacity>
 
                 <View style={styles.footerBranding}>
-                    <View style={styles.brandingBadge}>
-                        <Text style={styles.madeByText}>MADE BY <Text style={styles.brandName}>SHREYAS V</Text></Text>
-                    </View>
-                    <Text style={styles.versionText}>v1.0.0 Alpha • Secure Node</Text>
+                    <Text style={styles.versionText}>SECURE MESSENGER ENGINE • v1.0.4 FINAL</Text>
+                    <Text style={styles.brandName}>SHREYAS V SYSTEMS</Text>
                 </View>
             </ScrollView>
         </View>
     );
 }
-
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -248,95 +257,118 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingHorizontal: 24,
-        paddingTop: 10,
+        paddingTop: 16,
         paddingBottom: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     headerTitle: {
         color: COLORS.text,
         fontSize: 32,
-        fontWeight: '800',
+        fontWeight: '900',
+        letterSpacing: -1,
     },
-    scrollContainer: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingBottom: 40,
+    nodeBadge: {
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(16, 185, 129, 0.2)',
+    },
+    nodeBadgeText: {
+        color: COLORS.success,
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
     },
     profileHero: {
         alignItems: 'center',
-        paddingVertical: 32,
+        paddingVertical: 40,
     },
     avatarWrapper: {
         position: 'relative',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     avatar: {
-        width: 110,
-        height: 110,
-        borderRadius: 55,
-        backgroundColor: COLORS.surfaceLight,
+        width: 120,
+        height: 120,
+        borderRadius: 40,
+        backgroundColor: COLORS.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(129, 140, 248, 0.2)',
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.1)',
+        elevation: 8,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
     },
     avatarEditBtn: {
         position: 'absolute',
-        bottom: 4,
-        right: 4,
+        bottom: -4,
+        right: -4,
         backgroundColor: COLORS.primary,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 36,
+        height: 36,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 3,
+        borderWidth: 4,
         borderColor: COLORS.background,
     },
     avatarText: {
         color: COLORS.primary,
-        fontSize: 40,
-        fontWeight: '800',
+        fontSize: 48,
+        fontWeight: '900',
     },
     userNameSection: {
         alignItems: 'center',
     },
     username: {
         color: COLORS.text,
-        fontSize: 28,
-        fontWeight: '800',
+        fontSize: 30,
+        fontWeight: '900',
+        letterSpacing: -0.5,
     },
     editNameBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: 'rgba(56, 189, 248, 0.1)',
-        gap: 6,
+        marginTop: 12,
+        paddingHorizontal: 18,
+        paddingVertical: 8,
+        borderRadius: 14,
+        backgroundColor: COLORS.surface,
+        gap: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     editBtnText: {
-        color: COLORS.primary,
+        color: COLORS.textSecondary,
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '800',
     },
     editCard: {
         width: '100%',
         backgroundColor: COLORS.surface,
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 24,
+        padding: 24,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: 'rgba(148, 163, 184, 0.1)',
     },
     editInput: {
-        backgroundColor: COLORS.inputBg,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+        backgroundColor: COLORS.background,
+        borderRadius: 14,
+        paddingHorizontal: 18,
+        paddingVertical: 16,
         color: COLORS.text,
         fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 16,
+        fontWeight: '700',
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     editActions: {
         flexDirection: 'row',
@@ -345,40 +377,40 @@ const styles = StyleSheet.create({
     saveBtn: {
         flex: 1,
         backgroundColor: COLORS.primary,
-        borderRadius: 12,
-        paddingVertical: 14,
+        borderRadius: 14,
+        paddingVertical: 16,
         alignItems: 'center',
     },
     saveBtnText: {
         color: '#fff',
-        fontWeight: '800',
+        fontWeight: '900',
         fontSize: 15,
     },
     cancelBtn: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         justifyContent: 'center',
     },
     cancelText: {
         color: COLORS.textMuted,
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     settingsSection: {
         marginBottom: 32,
     },
     sectionLabel: {
         color: COLORS.textMuted,
-        fontSize: 13,
-        fontWeight: '800',
+        fontSize: 12,
+        fontWeight: '900',
         textTransform: 'uppercase',
         letterSpacing: 1.5,
         marginLeft: 4,
-        marginBottom: 12,
+        marginBottom: 16,
         marginTop: 16,
     },
     settingsCard: {
         backgroundColor: COLORS.surface,
-        borderRadius: 24,
+        borderRadius: 28,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(148, 163, 184, 0.05)',
@@ -386,24 +418,23 @@ const styles = StyleSheet.create({
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        gap: 16,
+        padding: 18,
+        gap: 18,
     },
-    settingIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: 'rgba(148, 163, 184, 0.05)',
-        textAlign: 'center',
-        lineHeight: 40,
+    iconBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     settingContent: {
         flex: 1,
     },
     settingLabel: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        fontWeight: '600',
+        color: COLORS.textMuted,
+        fontSize: 13,
+        fontWeight: '800',
     },
     settingValue: {
         color: COLORS.text,
@@ -414,49 +445,41 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         backgroundColor: 'rgba(148, 163, 184, 0.03)',
-        marginLeft: 72,
+        marginLeft: 80,
     },
     signOutBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 10,
-        paddingVertical: 18,
+        paddingVertical: 20,
         borderRadius: 24,
-        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        backgroundColor: 'rgba(239, 68, 68, 0.04)',
         borderWidth: 1,
-        borderColor: 'rgba(239, 68, 68, 0.2)',
-        marginBottom: 20,
+        borderColor: 'rgba(239, 68, 68, 0.1)',
+        marginBottom: 40,
     },
     signOutText: {
         color: COLORS.error,
-        fontSize: 16,
-        fontWeight: '800',
+        fontSize: 17,
+        fontWeight: '900',
+        letterSpacing: -0.3,
     },
     footerBranding: {
         alignItems: 'center',
-        paddingVertical: 12,
-        marginBottom: Platform.OS === 'ios' ? 0 : 10,
-    },
-    brandingBadge: {
-        backgroundColor: 'rgba(129, 140, 248, 0.1)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginBottom: 8,
-    },
-    madeByText: {
-        color: COLORS.textSecondary,
-        fontSize: 11,
-        fontWeight: '800',
-        letterSpacing: 1,
-    },
-    brandName: {
-        color: COLORS.accent,
+        paddingVertical: 20,
     },
     versionText: {
         color: COLORS.textMuted,
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 2,
+        marginBottom: 6,
+    },
+    brandName: {
+        color: COLORS.primary,
         fontSize: 12,
-        fontWeight: '600',
+        fontWeight: '900',
+        letterSpacing: 1,
     },
 });

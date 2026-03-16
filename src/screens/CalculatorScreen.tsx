@@ -257,81 +257,83 @@ export default function CalculatorScreen({ navigation }: Props) {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-            {/* Display */}
-            <View style={styles.display}>
-                <Text
-                    style={[styles.displayText, { fontSize: displayFontSize }]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.4}
-                >
-                    {formatNumber(display)}
-                </Text>
-            </View>
-
-            {/* Buttons */}
-            <View style={styles.buttons}>
-                {/* Row 1: AC +/- % ÷ */}
-                <View style={styles.row}>
-                    <CalculatorButton label={clearLabel} onPress={handleClear} variant="special" />
-                    <CalculatorButton label="⁺∕₋" onPress={handleToggleSign} variant="special" />
-                    <CalculatorButton label="%" onPress={handlePercentage} variant="special" />
-                    <CalculatorButton
-                        label="÷"
-                        onPress={() => handleOperator('÷')}
-                        variant="operator"
-                        isActive={activeOperator === '÷'}
-                    />
+            <View style={styles.contentWrapper}>
+                {/* Display */}
+                <View style={styles.display}>
+                    <Text
+                        style={[styles.displayText, { fontSize: displayFontSize }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.4}
+                    >
+                        {formatNumber(display)}
+                    </Text>
                 </View>
 
-                {/* Row 2: 7 8 9 × */}
-                <View style={styles.row}>
-                    <CalculatorButton label="7" onPress={() => handleNumber('7')} />
-                    <CalculatorButton label="8" onPress={() => handleNumber('8')} />
-                    <CalculatorButton label="9" onPress={() => handleNumber('9')} />
-                    <CalculatorButton
-                        label="×"
-                        onPress={() => handleOperator('×')}
-                        variant="operator"
-                        isActive={activeOperator === '×'}
-                    />
-                </View>
+                {/* Buttons */}
+                <View style={styles.buttons}>
+                    {/* Row 1: AC +/- % ÷ */}
+                    <View style={styles.row}>
+                        <CalculatorButton label={clearLabel} onPress={handleClear} variant="special" />
+                        <CalculatorButton label="⁺∕₋" onPress={handleToggleSign} variant="special" />
+                        <CalculatorButton label="%" onPress={handlePercentage} variant="special" />
+                        <CalculatorButton
+                            label="÷"
+                            onPress={() => handleOperator('÷')}
+                            variant="operator"
+                            isActive={activeOperator === '÷'}
+                        />
+                    </View>
 
-                {/* Row 3: 4 5 6 − */}
-                <View style={styles.row}>
-                    <CalculatorButton label="4" onPress={() => handleNumber('4')} />
-                    <CalculatorButton label="5" onPress={() => handleNumber('5')} />
-                    <CalculatorButton label="6" onPress={() => handleNumber('6')} />
-                    <CalculatorButton
-                        label="−"
-                        onPress={() => handleOperator('−')}
-                        variant="operator"
-                        isActive={activeOperator === '−'}
-                    />
-                </View>
+                    {/* Row 2: 7 8 9 × */}
+                    <View style={styles.row}>
+                        <CalculatorButton label="7" onPress={() => handleNumber('7')} />
+                        <CalculatorButton label="8" onPress={() => handleNumber('8')} />
+                        <CalculatorButton label="9" onPress={() => handleNumber('9')} />
+                        <CalculatorButton
+                            label="×"
+                            onPress={() => handleOperator('×')}
+                            variant="operator"
+                            isActive={activeOperator === '×'}
+                        />
+                    </View>
 
-                {/* Row 4: 1 2 3 + */}
-                <View style={styles.row}>
-                    <CalculatorButton label="1" onPress={() => handleNumber('1')} />
-                    <CalculatorButton label="2" onPress={() => handleNumber('2')} />
-                    <CalculatorButton label="3" onPress={() => handleNumber('3')} />
-                    <CalculatorButton
-                        label="+"
-                        onPress={() => handleOperator('+')}
-                        variant="operator"
-                        isActive={activeOperator === '+'}
-                    />
-                </View>
+                    {/* Row 3: 4 5 6 − */}
+                    <View style={styles.row}>
+                        <CalculatorButton label="4" onPress={() => handleNumber('4')} />
+                        <CalculatorButton label="5" onPress={() => handleNumber('5')} />
+                        <CalculatorButton label="6" onPress={() => handleNumber('6')} />
+                        <CalculatorButton
+                            label="−"
+                            onPress={() => handleOperator('−')}
+                            variant="operator"
+                            isActive={activeOperator === '−'}
+                        />
+                    </View>
 
-                {/* Row 5: 0 . = */}
-                <View style={styles.row}>
-                    <CalculatorButton label="0" onPress={() => handleNumber('0')} variant="wide" />
-                    <CalculatorButton label="." onPress={handleDecimal} />
-                    <CalculatorButton label="=" onPress={handleEquals} variant="operator" />
-                </View>
+                    {/* Row 4: 1 2 3 + */}
+                    <View style={styles.row}>
+                        <CalculatorButton label="1" onPress={() => handleNumber('1')} />
+                        <CalculatorButton label="2" onPress={() => handleNumber('2')} />
+                        <CalculatorButton label="3" onPress={() => handleNumber('3')} />
+                        <CalculatorButton
+                            label="+"
+                            onPress={() => handleOperator('+')}
+                            variant="operator"
+                            isActive={activeOperator === '+'}
+                        />
+                    </View>
 
-                <View style={styles.footerBranding}>
-                    <Text style={styles.madeByText}>Made by Shreyas V</Text>
+                    {/* Row 5: 0 . = */}
+                    <View style={styles.row}>
+                        <CalculatorButton label="0" onPress={() => handleNumber('0')} variant="wide" />
+                        <CalculatorButton label="." onPress={handleDecimal} />
+                        <CalculatorButton label="=" onPress={handleEquals} variant="operator" />
+                    </View>
+
+                    <View style={styles.footerBranding}>
+                        <Text style={styles.madeByText}>Made by Shreyas V</Text>
+                    </View>
                 </View>
             </View>
         </SafeAreaView>
@@ -342,14 +344,24 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000000',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    contentWrapper: {
+        width: '100%',
+        maxWidth: 360, // Slightly narrower
+        height: Platform.OS === 'web' ? 'auto' : '100%',
+        maxHeight: Platform.OS === 'web' ? 620 : 'none', // More compact
+        justifyContent: 'flex-end',
+        paddingBottom: Platform.OS === 'web' ? 10 : 20,
     },
     display: {
         flex: 1,
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
-        paddingHorizontal: 28,
-        paddingBottom: 8,
-        minHeight: 120,
+        paddingHorizontal: 20,
+        paddingBottom: Platform.OS === 'web' ? 10 : 20,
+        minHeight: Platform.OS === 'web' ? 80 : 120,
     },
     displayText: {
         color: '#ffffff',
@@ -358,15 +370,15 @@ const styles = StyleSheet.create({
         letterSpacing: 0,
     },
     buttons: {
-        paddingHorizontal: 10,
-        paddingBottom: Platform.OS === 'ios' ? 10 : 20,
+        paddingHorizontal: Platform.OS === 'web' ? 5 : 10,
+        paddingBottom: Platform.OS === 'ios' ? 10 : (Platform.OS === 'web' ? 5 : 20),
     },
     row: {
         flexDirection: 'row',
         justifyContent: 'center',
     },
     footerBranding: {
-        marginTop: 20,
+        marginTop: 10,
         alignItems: 'center',
         opacity: 0, // Hidden for stealth
     },

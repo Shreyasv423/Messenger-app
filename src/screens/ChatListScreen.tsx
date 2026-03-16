@@ -12,8 +12,10 @@ import {
     Alert,
     ActivityIndicator,
     Platform,
+    StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../utils/constants';
 import { Chat, User, ChatStackParamList } from '../types';
 import { getChats, createChat } from '../services/chatService';
@@ -96,51 +98,50 @@ export default function ChatListScreen({ navigation }: Props) {
         }
     };
 
-    const renderChatItem = ({ item }: { item: Chat }) => (
-        <ChatListItem
-            chat={item}
-            onPress={() => {
-                if (item.other_user) {
-                    navigation.navigate('Chat', {
-                        chatId: item.id,
-                        otherUser: item.other_user,
-                    });
-                }
-            }}
-        />
-    );
-
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
+            <StatusBar barStyle="light-content" />
+            
             <View style={styles.header}>
                 <View>
                     <Text style={styles.headerTitle}>Messages</Text>
-                    <Text style={styles.headerSubtitle}>Recent Conversations</Text>
+                    <View style={styles.statusIndicator}>
+                        <View style={styles.onlineDot} />
+                        <Text style={styles.headerSubtitle}>Encrypted Network Online</Text>
+                    </View>
                 </View>
                 <TouchableOpacity style={styles.headerIcon}>
-                    <Ionicons name="ellipsis-vertical" size={24} color={COLORS.text} />
+                    <Ionicons name="search" size={22} color={COLORS.textSecondary} />
                 </TouchableOpacity>
-            </View>
-
-            <View style={styles.searchBarContainer}>
-                <View style={styles.searchBar}>
-                    <Ionicons name="search" size={20} color={COLORS.textMuted} />
-                    <Text style={styles.searchPlaceholder}>Search for chats...</Text>
-                </View>
             </View>
 
             <FlatList
                 data={chats}
-                renderItem={renderChatItem}
+                renderItem={({ item }) => (
+                    <ChatListItem
+                        chat={item}
+                        onPress={() => {
+                            if (item.other_user) {
+                                navigation.navigate('Chat', {
+                                    chatId: item.id,
+                                    otherUser: item.other_user,
+                                });
+                            }
+                        }}
+                    />
+                )}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={chats.length === 0 ? styles.emptyContainer : styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.empty}>
                         <View style={styles.emptyCircle}>
-                            <Ionicons name="chatbubbles-outline" size={80} color={COLORS.primary} />
+                            <Ionicons name="chatbubble-ellipses-outline" size={70} color={COLORS.primary} />
                         </View>
-                        <Text style={styles.emptyText}>Empty Inbox</Text>
-                        <Text style={styles.emptySubtext}>Your private messages will appear here. Start a new one!</Text>
+                        <Text style={styles.emptyText}>No Active Nodes</Text>
+                        <Text style={styles.emptySubtext}>Start a new end-to-end encrypted conversation.</Text>
+                        <TouchableOpacity style={styles.emptyBtn} onPress={() => setShowNewChat(true)}>
+                            <Text style={styles.emptyBtnText}>New Conversation</Text>
+                        </TouchableOpacity>
                     </View>
                 }
                 refreshControl={
@@ -158,11 +159,11 @@ export default function ChatListScreen({ navigation }: Props) {
                 onPress={() => setShowNewChat(true)}
                 activeOpacity={0.8}
             >
-                <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
+                <Ionicons name="add" size={32} color="#fff" />
             </TouchableOpacity>
 
-            {/* New Chat Modal (Bottom Sheet style) */}
-            <Modal visible={showNewChat} animationType="slide" transparent>
+            {/* New Chat Modal (Premium Overlay) */}
+            <Modal visible={showNewChat} animationType="fade" transparent>
                 <View style={styles.modalOverlay}>
                     <TouchableOpacity
                         style={styles.modalDismisContainer}
@@ -172,21 +173,17 @@ export default function ChatListScreen({ navigation }: Props) {
                     <View style={styles.modalContent}>
                         <View style={styles.modalDragHandle} />
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>New Conversation</Text>
-                            <TouchableOpacity style={styles.closeBtn} onPress={() => {
-                                setShowNewChat(false);
-                                setSearchQuery('');
-                                setSearchResults([]);
-                            }}>
+                            <Text style={styles.modalTitle}>Select Identity</Text>
+                            <TouchableOpacity style={styles.closeBtn} onPress={() => setShowNewChat(false)}>
                                 <Ionicons name="close" size={24} color={COLORS.textSecondary} />
                             </TouchableOpacity>
                         </View>
 
                         <View style={styles.modalSearchWrapper}>
-                            <Ionicons name="search" size={20} color={COLORS.textMuted} style={styles.modalSearchIcon} />
+                            <Ionicons name="at-outline" size={20} color={COLORS.textMuted} style={styles.modalSearchIcon} />
                             <TextInput
                                 style={styles.searchInput}
-                                placeholder="Search by name..."
+                                placeholder="Search by username..."
                                 placeholderTextColor={COLORS.textMuted}
                                 value={searchQuery}
                                 onChangeText={handleSearch}
@@ -197,41 +194,39 @@ export default function ChatListScreen({ navigation }: Props) {
                         {searching ? (
                             <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
                         ) : (
-                            <View style={{ flex: 1 }}>
-                                {searchQuery === '' && searchResults.length > 0 && (
-                                    <Text style={styles.sectionTitle}>People You Might Know</Text>
-                                )}
-                                <FlatList
-                                    data={searchResults}
-                                    keyExtractor={(item) => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={styles.searchResult}
-                                            onPress={() => handleNewChat(item)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <View style={[styles.searchAvatar, { backgroundColor: COLORS.surfaceLight }]}>
-                                                <Text style={styles.searchAvatarText}>
-                                                    {item.username[0].toUpperCase()}
-                                                </Text>
-                                            </View>
-                                            <View style={styles.searchInfo}>
-                                                <Text style={styles.searchUsername}>{item.username}</Text>
-                                                <Text style={styles.searchStatus}>Available</Text>
-                                            </View>
-                                            <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
-                                        </TouchableOpacity>
-                                    )}
-                                    ListEmptyComponent={
-                                        <View style={styles.modalEmpty}>
-                                            <Ionicons name="people-outline" size={48} color={COLORS.textMuted} />
-                                            <Text style={styles.noResults}>
-                                                {searchQuery.length > 0 ? "No users found" : "No other users registered yet"}
+                            <FlatList
+                                data={searchResults}
+                                keyExtractor={(item) => item.id}
+                                contentContainerStyle={{ paddingBottom: 40 }}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={styles.searchResult}
+                                        onPress={() => handleNewChat(item)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={[styles.searchAvatar, { backgroundColor: COLORS.surfaceLight }]}>
+                                            <Text style={styles.searchAvatarText}>
+                                                {item.username[0].toUpperCase()}
                                             </Text>
                                         </View>
-                                    }
-                                />
-                            </View>
+                                        <View style={styles.searchInfo}>
+                                            <Text style={styles.searchUsername}>{item.username}</Text>
+                                            <Text style={styles.searchStatus}>Available for Secure Chat</Text>
+                                        </View>
+                                        <View style={styles.searchAction}>
+                                            <Ionicons name="chatbubble-outline" size={20} color={COLORS.primary} />
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                                ListEmptyComponent={
+                                    <View style={styles.modalEmpty}>
+                                        <Ionicons name="search-outline" size={48} color={COLORS.textMuted} />
+                                        <Text style={styles.noResults}>
+                                            {searchQuery.length > 0 ? "Identity not found" : "Search to begin"}
+                                        </Text>
+                                    </View>
+                                }
+                            />
                         )}
                     </View>
                 </View>
@@ -240,8 +235,6 @@ export default function ChatListScreen({ navigation }: Props) {
     );
 }
 
-import { Ionicons } from '@expo/vector-icons';
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -249,8 +242,8 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingHorizontal: 24,
-        paddingTop: 10,
-        paddingBottom: 20,
+        paddingTop: 16,
+        paddingBottom: 24,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -258,40 +251,36 @@ const styles = StyleSheet.create({
     headerTitle: {
         color: COLORS.text,
         fontSize: 34,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: -1,
+    },
+    statusIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 6,
+    },
+    onlineDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: COLORS.success,
     },
     headerSubtitle: {
         color: COLORS.textMuted,
-        fontSize: 14,
-        fontWeight: '600',
-        marginTop: 2,
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     headerIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 48,
+        height: 48,
+        borderRadius: 16,
         backgroundColor: COLORS.surface,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    searchBarContainer: {
-        paddingHorizontal: 24,
-        marginBottom: 20,
-    },
-    searchBar: {
-        backgroundColor: COLORS.surface,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 16,
-        gap: 12,
-    },
-    searchPlaceholder: {
-        color: COLORS.textMuted,
-        fontSize: 15,
-        fontWeight: '500',
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     listContent: {
         paddingBottom: 110,
@@ -302,22 +291,25 @@ const styles = StyleSheet.create({
     },
     empty: {
         alignItems: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: 48,
     },
     emptyCircle: {
-        width: 160,
-        height: 160,
-        borderRadius: 80,
-        backgroundColor: 'rgba(56, 189, 248, 0.05)',
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        backgroundColor: 'rgba(56, 189, 248, 0.03)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 28,
+        borderWidth: 1,
+        borderColor: 'rgba(56, 189, 248, 0.05)',
     },
     emptyText: {
         color: COLORS.text,
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 26,
+        fontWeight: '900',
         marginBottom: 12,
+        letterSpacing: -0.5,
     },
     emptySubtext: {
         color: COLORS.textSecondary,
@@ -325,27 +317,41 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 24,
         fontWeight: '500',
+        marginBottom: 32,
+    },
+    emptyBtn: {
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(56, 189, 248, 0.2)',
+    },
+    emptyBtnText: {
+        color: COLORS.primary,
+        fontSize: 16,
+        fontWeight: '800',
     },
     fab: {
         position: 'absolute',
-        bottom: 20,
+        bottom: Platform.OS === 'web' ? 40 : 30,
         right: 24,
-        width: 65,
-        height: 65,
-        borderRadius: 32.5,
-        backgroundColor: COLORS.accent,
+        width: 68,
+        height: 68,
+        borderRadius: 24,
+        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 8,
-        shadowColor: COLORS.accent,
+        elevation: 12,
+        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.4,
-        shadowRadius: 15,
+        shadowRadius: 20,
         zIndex: 999,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.85)',
+        backgroundColor: 'rgba(0,0,0,0.9)',
         justifyContent: 'flex-end',
     },
     modalDismisContainer: {
@@ -353,36 +359,39 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: COLORS.surface,
-        borderTopLeftRadius: 36,
-        borderTopRightRadius: 36,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         paddingHorizontal: 24,
         paddingTop: 12,
         paddingBottom: 40,
         height: '85%',
+        borderWidth: 1,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     modalDragHandle: {
-        width: 40,
+        width: 36,
         height: 5,
         backgroundColor: COLORS.border,
         borderRadius: 3,
         alignSelf: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 28,
     },
     modalTitle: {
         color: COLORS.text,
-        fontSize: 26,
-        fontWeight: '800',
+        fontSize: 28,
+        fontWeight: '900',
+        letterSpacing: -0.5,
     },
     closeBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 40,
+        height: 40,
+        borderRadius: 14,
         backgroundColor: COLORS.surfaceLight,
         justifyContent: 'center',
         alignItems: 'center',
@@ -390,34 +399,34 @@ const styles = StyleSheet.create({
     modalSearchWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.inputBg,
-        borderRadius: 16,
+        backgroundColor: COLORS.background,
+        borderRadius: 18,
         paddingHorizontal: 16,
-        marginBottom: 24,
+        marginBottom: 28,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     modalSearchIcon: {
         marginRight: 10,
     },
     searchInput: {
         flex: 1,
-        paddingVertical: 14,
+        paddingVertical: 16,
         color: COLORS.text,
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     searchResult: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 14,
+        paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(148, 163, 184, 0.05)',
+        borderBottomColor: 'rgba(148, 163, 184, 0.03)',
     },
     searchAvatar: {
-        width: 54,
-        height: 54,
-        borderRadius: 27,
+        width: 56,
+        height: 56,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -425,41 +434,40 @@ const styles = StyleSheet.create({
     searchAvatarText: {
         color: COLORS.primary,
         fontSize: 22,
-        fontWeight: '700',
+        fontWeight: '800',
     },
     searchInfo: {
         flex: 1,
     },
     searchUsername: {
         color: COLORS.text,
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: '700',
         marginBottom: 2,
     },
     searchStatus: {
-        color: COLORS.success,
+        color: COLORS.textSecondary,
         fontSize: 13,
         fontWeight: '600',
     },
-    sectionTitle: {
-        color: COLORS.textMuted,
-        fontSize: 13,
-        fontWeight: '800',
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: 16,
-        marginTop: 8,
+    searchAction: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(56, 189, 248, 0.05)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalEmpty: {
         alignItems: 'center',
-        marginTop: 60,
-        opacity: 0.5,
+        marginTop: 80,
     },
     noResults: {
-        color: COLORS.textSecondary,
+        color: COLORS.textMuted,
         textAlign: 'center',
-        marginTop: 16,
+        marginTop: 20,
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });

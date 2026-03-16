@@ -8,11 +8,14 @@ import {
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const BUTTON_MARGIN = 6;
+const IS_WEB = Platform.OS === 'web';
+const BUTTON_MARGIN = SCREEN_WIDTH > 600 ? 6 : 6;
 const BUTTONS_PER_ROW = 4;
-const TOTAL_PADDING = 16 * 2; // container padding
+const TOTAL_PADDING = 16 * 2;
 const TOTAL_MARGINS = BUTTON_MARGIN * 2 * BUTTONS_PER_ROW;
-const BUTTON_SIZE = (SCREEN_WIDTH - TOTAL_PADDING - TOTAL_MARGINS) / BUTTONS_PER_ROW;
+const CALCULATED_SIZE = (SCREEN_WIDTH - TOTAL_PADDING - TOTAL_MARGINS) / BUTTONS_PER_ROW;
+// On web/large screens, make buttons much smaller
+const BUTTON_SIZE = IS_WEB ? 70 : (SCREEN_WIDTH > 600 ? Math.min(CALCULATED_SIZE, 80) : CALCULATED_SIZE);
 
 interface CalculatorButtonProps {
     label: string;
@@ -96,16 +99,16 @@ const styles = StyleSheet.create({
         paddingLeft: BUTTON_SIZE * 0.36,
     },
     text: {
-        fontSize: 34,
+        fontSize: BUTTON_SIZE * 0.45,
         fontWeight: '400',
         fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-light',
     },
     operatorText: {
-        fontSize: 38,
+        fontSize: BUTTON_SIZE * 0.5,
         fontWeight: '300',
     },
     specialText: {
-        fontSize: 28,
+        fontSize: BUTTON_SIZE * 0.35,
         fontWeight: '500',
     },
 });

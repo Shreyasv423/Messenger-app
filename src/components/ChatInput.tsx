@@ -20,34 +20,41 @@ export default function ChatInput({ onSend }: ChatInputProps) {
         <View style={styles.container}>
             <View style={styles.inputWrapper}>
                 <TouchableOpacity style={styles.iconBtn}>
-                    <Ionicons name="add" size={26} color={COLORS.textSecondary} />
+                    <Ionicons name="add-circle" size={28} color={COLORS.primary} />
                 </TouchableOpacity>
                 <TextInput
                     style={styles.input}
-                    placeholder="Type a message..."
+                    placeholder="Message..."
                     placeholderTextColor={COLORS.textMuted}
                     value={text}
                     onChangeText={setText}
                     multiline
                     maxLength={2000}
                 />
-                {text.length === 0 && (
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <Ionicons name="images-outline" size={22} color={COLORS.textSecondary} />
-                    </TouchableOpacity>
-                )}
+                <View style={styles.rightIcons}>
+                    {text.length === 0 ? (
+                        <>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <Ionicons name="camera-outline" size={24} color={COLORS.textSecondary} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <Ionicons name="square-outline" size={20} color={COLORS.textSecondary} />
+                            </TouchableOpacity>
+                        </>
+                    ) : null}
+                </View>
             </View>
             <TouchableOpacity
                 style={[
                     styles.sendBtn,
-                    { backgroundColor: text.trim() ? COLORS.accent : COLORS.surfaceLight }
+                    { backgroundColor: text.trim() ? COLORS.primary : COLORS.surface }
                 ]}
                 onPress={handleSend}
                 disabled={text.trim().length === 0}
             >
                 <Ionicons
-                    name={text.trim() ? "send" : "mic"}
-                    size={20}
+                    name={text.trim() ? "arrow-up" : "mic"}
+                    size={24}
                     color={text.trim() ? "#fff" : COLORS.textMuted}
                 />
             </TouchableOpacity>
@@ -59,10 +66,10 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         backgroundColor: COLORS.background,
-        gap: 8,
+        gap: 12,
     },
     inputWrapper: {
         flex: 1,
@@ -70,13 +77,17 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         backgroundColor: COLORS.surface,
         borderRadius: 24,
-        paddingHorizontal: 8,
+        paddingHorizontal: 6,
         paddingVertical: 4,
         borderWidth: 1,
         borderColor: 'rgba(148, 163, 184, 0.05)',
+        minHeight: 52,
     },
     iconBtn: {
-        padding: 8,
+        width: 44,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     input: {
         flex: 1,
@@ -84,18 +95,23 @@ const styles = StyleSheet.create({
         fontSize: 16,
         maxHeight: 120,
         paddingHorizontal: 8,
-        paddingVertical: 10,
+        paddingVertical: 12,
+        fontWeight: '500',
+    },
+    rightIcons: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     sendBtn: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        elevation: 6,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
     },
 });

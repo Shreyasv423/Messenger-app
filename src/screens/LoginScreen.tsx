@@ -10,7 +10,9 @@ import {
     Platform,
     ActivityIndicator,
     Alert,
+    ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../utils/constants';
 import { signIn, signUp } from '../services/authService';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -48,9 +50,9 @@ export default function LoginScreen({ navigation }: Props) {
         } catch (error: any) {
             console.error('Auth error:', error);
             let message = error.message || 'Something went wrong';
-            if (error.code === 'email_not_confirmed') message = 'Please confirm your email first.';
-            else if (error.code === 'invalid_credentials') message = 'Invalid email or password.';
-            Alert.alert('Login Failed', message);
+            if (error.code === 'auth/invalid-credential') message = 'Invalid email or password.';
+            else if (error.code === 'auth/email-already-in-use') message = 'This email is already registered.';
+            Alert.alert('Authentication Failed', message);
         } finally {
             setLoading(false);
         }
@@ -66,13 +68,12 @@ export default function LoginScreen({ navigation }: Props) {
                     style={styles.flex}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
-                    centerContent={true}
                 >
                     <View style={styles.header}>
                         <View style={styles.logoBadge}>
-                            <Ionicons name="lock-closed" size={40} color={COLORS.primary} />
+                            <Ionicons name="shield-checkmark" size={44} color={COLORS.primary} />
                         </View>
-                        <Text style={styles.title}>Private Messenger</Text>
+                        <Text style={styles.title}>Secure Node</Text>
                         <Text style={styles.subtitle}>
                             {isLogin ? 'Access your encrypted conversations' : 'Create a new secure identity'}
                         </Text>
@@ -126,7 +127,7 @@ export default function LoginScreen({ navigation }: Props) {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.buttonText}>
-                                    {isLogin ? 'Sign In Secretly' : 'Join the Network'}
+                                    {isLogin ? 'Sign In' : 'Register Identity'}
                                 </Text>
                             )}
                         </TouchableOpacity>
@@ -136,15 +137,14 @@ export default function LoginScreen({ navigation }: Props) {
                             onPress={() => setIsLogin(!isLogin)}
                         >
                             <Text style={styles.toggleText}>
-                                {isLogin
-                                    ? "New here? <Text style={styles.toggleBold}>Create Account</Text>"
-                                    : 'Registered already? <Text style={styles.toggleBold}>Sign In</Text>'}
+                                {isLogin ? (
+                                    <>New here? <Text style={styles.toggleBold}>Create Account</Text></>
+                                ) : (
+                                    <>Registered already? <Text style={styles.toggleBold}>Sign In</Text></>
+                                )}
                             </Text>
                         </TouchableOpacity>
                     </View>
-
-                    {/* Spacing for mobile keyboard */}
-                    <View style={{ height: 100 }} />
                 </ScrollView>
 
                 <View style={styles.footer}>
@@ -157,16 +157,13 @@ export default function LoginScreen({ navigation }: Props) {
                     </TouchableOpacity>
 
                     <View style={styles.madeByBadge}>
-                        <Text style={styles.madeByText}>MADE BY <Text style={styles.brandName}>SHREYAS V</Text></Text>
+                        <Text style={styles.madeByText}>ENCRYPTED NODE <Text style={styles.brandName}>V1.0</Text></Text>
                     </View>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
-
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -181,8 +178,8 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 32,
-        paddingTop: 80,
-        paddingBottom: 40,
+        paddingTop: Platform.OS === 'web' ? 100 : 80,
+        paddingBottom: 150,
         flexGrow: 1,
         justifyContent: 'center',
     },
@@ -191,13 +188,13 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     logoBadge: {
-        width: 90,
-        height: 90,
-        borderRadius: 28,
+        width: 80,
+        height: 80,
+        borderRadius: 24,
         backgroundColor: COLORS.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
         borderWidth: 1,
         borderColor: 'rgba(56, 189, 248, 0.1)',
         elevation: 10,
@@ -209,7 +206,7 @@ const styles = StyleSheet.create({
     title: {
         color: COLORS.text,
         fontSize: 32,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: -1,
         marginBottom: 8,
     },
@@ -218,6 +215,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         textAlign: 'center',
         lineHeight: 22,
+        fontWeight: '500',
     },
     form: {
         gap: 16,
@@ -229,29 +227,29 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingHorizontal: 16,
         borderWidth: 1,
-        borderColor: 'rgba(148, 163, 184, 0.1)',
+        borderColor: 'rgba(148, 163, 184, 0.05)',
     },
     inputIcon: {
         marginRight: 12,
     },
     input: {
         flex: 1,
-        paddingVertical: 16,
+        paddingVertical: 18,
         color: COLORS.text,
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     button: {
-        backgroundColor: COLORS.accent,
+        backgroundColor: COLORS.primary,
         borderRadius: 16,
         paddingVertical: 18,
         alignItems: 'center',
         marginTop: 12,
         elevation: 8,
-        shadowColor: COLORS.accent,
-        shadowOffset: { width: 0, height: 6 },
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
-        shadowRadius: 12,
+        shadowRadius: 15,
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -263,15 +261,17 @@ const styles = StyleSheet.create({
     },
     toggleBtn: {
         alignItems: 'center',
-        marginTop: 10,
+        marginTop: 12,
+        paddingVertical: 8,
     },
     toggleText: {
         color: COLORS.textSecondary,
         fontSize: 15,
+        fontWeight: '500',
     },
     toggleBold: {
-        color: COLORS.accent,
-        fontWeight: '700',
+        color: COLORS.primary,
+        fontWeight: '800',
     },
     footer: {
         position: 'absolute',
@@ -290,21 +290,21 @@ const styles = StyleSheet.create({
     backText: {
         color: COLORS.textMuted,
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     madeByBadge: {
-        backgroundColor: 'rgba(129, 140, 248, 0.05)',
-        paddingHorizontal: 14,
-        paddingVertical: 6,
+        backgroundColor: 'rgba(148, 163, 184, 0.05)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 20,
     },
     madeByText: {
         color: COLORS.textMuted,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: '800',
-        letterSpacing: 1.2,
+        letterSpacing: 1.5,
     },
     brandName: {
-        color: COLORS.accent,
+        color: COLORS.primary,
     },
 });

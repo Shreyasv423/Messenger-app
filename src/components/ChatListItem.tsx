@@ -10,8 +10,15 @@ interface ChatListItemProps {
 }
 
 const AVATAR_COLORS = [
-    '#38BDF8', '#818CF8', '#C084FC', '#F472B6', '#FB7185',
-    '#FB923C', '#FBBF24', '#34D399', '#2DD4BF'
+    ['#38BDF8', '#0EA5E9'], // Sky
+    ['#818CF8', '#6366F1'], // Indigo
+    ['#C084FC', '#A855F7'], // Purple
+    ['#F472B6', '#EC4899'], // Pink
+    ['#FB7185', '#F43F5E'], // Rose
+    ['#FB923C', '#F97316'], // Orange
+    ['#FBBF24', '#F59E0B'], // Amber
+    ['#34D399', '#10B981'], // Emerald
+    ['#2DD4BF', '#14B8A6']  // Teal
 ];
 
 export default function ChatListItem({ chat, onPress }: ChatListItemProps) {
@@ -24,13 +31,13 @@ export default function ChatListItem({ chat, onPress }: ChatListItemProps) {
 
     // Deterministic color based on username
     const colorIndex = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % AVATAR_COLORS.length;
-    const avatarColor = AVATAR_COLORS[colorIndex];
+    const [colorLight, colorDark] = AVATAR_COLORS[colorIndex];
 
     return (
-        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.6}>
-            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+            <View style={[styles.avatarContainer, { backgroundColor: colorLight }]}>
                 <Text style={styles.avatarText}>{getInitials(username)}</Text>
-                {/* Online Indicator (Static for visual quality) */}
+                {/* Online Indicator */}
                 <View style={styles.onlineStatus} />
             </View>
             <View style={styles.content}>
@@ -38,7 +45,7 @@ export default function ChatListItem({ chat, onPress }: ChatListItemProps) {
                     <Text style={styles.username} numberOfLines={1}>
                         {username}
                     </Text>
-                    <Text style={[styles.time, isUnread && styles.unreadTime]}>{timestamp}</Text>
+                    {timestamp ? <Text style={[styles.time, isUnread && styles.unreadTime]}>{timestamp}</Text> : null}
                 </View>
                 <View style={styles.bottomRow}>
                     <Text
@@ -62,48 +69,50 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 14,
         backgroundColor: COLORS.background,
     },
-    avatar: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+    avatarContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
         position: 'relative',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
     },
     avatarText: {
         color: '#FFFFFF',
-        fontSize: 22,
-        fontWeight: '700',
+        fontSize: 24,
+        fontWeight: '800',
     },
     onlineStatus: {
         position: 'absolute',
-        bottom: 2,
-        right: 2,
-        width: 14,
-        height: 14,
-        borderRadius: 7,
+        bottom: -2,
+        right: -2,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
         backgroundColor: COLORS.success,
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: COLORS.background,
     },
     content: {
         flex: 1,
-        borderBottomWidth: 0.5,
-        borderBottomColor: 'rgba(148, 163, 184, 0.1)', // Subtle border
-        paddingBottom: 12,
-        height: '100%',
+        paddingBottom: 2,
         justifyContent: 'center',
     },
     topRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 4,
     },
     username: {
         color: COLORS.text,
@@ -115,7 +124,7 @@ const styles = StyleSheet.create({
     time: {
         color: COLORS.textMuted,
         fontSize: 12,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     unreadTime: {
         color: COLORS.primary,
@@ -127,27 +136,33 @@ const styles = StyleSheet.create({
     },
     lastMessage: {
         color: COLORS.textSecondary,
-        fontSize: 15,
+        fontSize: 14,
         flex: 1,
-        lineHeight: 20,
+        lineHeight: 18,
+        fontWeight: '500',
     },
     unreadMessage: {
         color: COLORS.text,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     unreadBadge: {
         backgroundColor: COLORS.primary,
-        minWidth: 20,
-        height: 20,
-        borderRadius: 10,
+        minWidth: 22,
+        height: 22,
+        borderRadius: 11,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 6,
         marginLeft: 8,
+        elevation: 4,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
     },
     unreadCount: {
-        color: COLORS.background,
+        color: '#FFFFFF',
         fontSize: 11,
-        fontWeight: '800',
+        fontWeight: '900',
     },
 });

@@ -8,8 +8,11 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
+    StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../utils/constants';
 import { Message, ChatStackParamList, User } from '../types';
 import { getMessages, sendMessage, subscribeToMessages, unsubscribe } from '../services/messageService';
@@ -28,6 +31,7 @@ export default function ChatScreen({ navigation, route }: Props) {
     const { chatId, otherUser } = route.params;
     const [messages, setMessages] = useState<Message[]>([]);
     const [userId, setUserId] = useState<string>('');
+    const [loading, setLoading] = useState(true);
     const flatListRef = useRef<FlatList>(null);
     const insets = useSafeAreaInsets();
 
@@ -41,6 +45,7 @@ export default function ChatScreen({ navigation, route }: Props) {
 
             const existingMessages = await getMessages(chatId);
             setMessages(existingMessages);
+            setLoading(false);
 
             channelRef = subscribeToMessages(chatId, (newMessage) => {
                 setMessages((prev) => {
@@ -69,26 +74,20 @@ export default function ChatScreen({ navigation, route }: Props) {
         }
     };
 
-    const renderMessage = ({ item }: { item: Message }) => (
-        <MessageBubble message={item} isOwn={item.sender_id === userId} />
-    );
-
     return (
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: Platform.OS === 'ios' ? 0 : 0 }]}>
+            <StatusBar barStyle="light-content" />
+            
+            {/* Premium Header */}
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => {
-                        if (navigation.canGoBack()) {
-                            navigation.goBack();
-                        } else {
-                            navigation.navigate('ChatList' as any);
-                        }
-                    }}
+                    onPress={() => navigation.goBack()}
                     style={styles.backBtn}
                 >
                     <Ionicons name="chevron-back" size={28} color={COLORS.text} />
                 </TouchableOpacity>
-                <View style={styles.headerProfile}>
+                
+                <TouchableOpacity style={styles.headerProfile} activeOpacity={0.7}>
                     <View style={[styles.headerAvatar, { backgroundColor: COLORS.surfaceLight }]}>
                         <Text style={styles.headerAvatarText}>
                             {otherUser.username[0].toUpperCase()}
@@ -96,15 +95,19 @@ export default function ChatScreen({ navigation, route }: Props) {
                     </View>
                     <View>
                         <Text style={styles.headerName}>{otherUser.username}</Text>
-                        <Text style={styles.headerStatus}>Online</Text>
+                        <View style={styles.statusContainer}>
+                            <View style={styles.onlineDot} />
+                            <Text style={styles.headerStatus}>Secure Node Active</Text>
+                        </View>
                     </View>
-                </View>
+                </TouchableOpacity>
+
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
-                        <Ionicons name="call-outline" size={20} color={COLORS.primary} />
+                    <TouchableOpacity style={styles.actionBtn}>
+                        <Ionicons name="videocam-outline" size={22} color={COLORS.textSecondary} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(129, 140, 248, 0.1)' }]}>
-                        <Ionicons name="videocam-outline" size={22} color={COLORS.accent} />
+                    <TouchableOpacity style={styles.actionBtn}>
+                        <Ionicons name="information-circle-outline" size={24} color={COLORS.textSecondary} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -114,30 +117,35 @@ export default function ChatScreen({ navigation, route }: Props) {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    renderItem={renderMessage}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.messageList}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                    ListEmptyComponent={
-                        <View style={styles.empty}>
-                            <View style={styles.emptyIconCircle}>
-                                <Ionicons name="chatbubbles-outline" size={60} color={COLORS.textMuted} />
-                            </View>
-                            <Text style={styles.emptyText}>Start a Secret Chat</Text>
-                            <Text style={styles.emptySubtext}>Messages are end-to-end encrypted</Text>
-                        </View>
-                    }
-                />
-                <ChatInput onSend={handleSend} />
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator color={COLORS.primary} size="large" />
+                        <Text style={styles.loadingText}>Establishing Secure Connection...</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        ref={flatListRef}
+                        data={messages}
+                        renderItem={({ item }) => (
+                            <MessageBubble message={item} isOwn={item.sender_id === userId} />
+                        )}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.messageList}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                        ListHeaderComponent={<View style={styles.encryptionBadge}>
+                            <Ionicons name="lock-closed" size={12} color={COLORS.textMuted} />
+                            <Text style={styles.encryptionText}>End-to-End Encrypted</Text>
+                        </View>}
+                    />
+                )}
+                
+                <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
+                    <ChatInput onSend={handleSend} />
+                </View>
             </KeyboardAvoidingView>
         </View>
     );
 }
-
-import { Ionicons } from '@expo/vector-icons';
 
 const styles = StyleSheet.create({
     container: {
@@ -151,85 +159,115 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         backgroundColor: COLORS.background,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(148, 163, 184, 0.05)',
     },
     backBtn: {
-        padding: 4,
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerProfile: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 12,
+        marginLeft: 8,
     },
     headerAvatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 42,
+        height: 42,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(56, 189, 248, 0.1)',
     },
     headerAvatarText: {
         color: COLORS.primary,
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 18,
+        fontWeight: '800',
     },
     headerName: {
         color: COLORS.text,
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 17,
+        fontWeight: '800',
+        letterSpacing: -0.3,
+    },
+    statusContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 2,
+        gap: 5,
+    },
+    onlineDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.success,
     },
     headerStatus: {
-        color: COLORS.success,
-        fontSize: 12,
-        fontWeight: '600',
-        marginTop: 1,
+        color: COLORS.textMuted,
+        fontSize: 11,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 4,
     },
     actionBtn: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 40,
+        height: 40,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
     messageList: {
-        paddingVertical: 10,
-        paddingHorizontal: 8,
-        paddingBottom: 20, // Space for the input bar
+        paddingVertical: 20,
+        paddingHorizontal: 10,
     },
-    empty: {
+    encryptionBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(148, 163, 184, 0.03)',
+        alignSelf: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 12,
+        marginBottom: 24,
+        borderWidth: 0.5,
+        borderColor: 'rgba(148, 163, 184, 0.05)',
+    },
+    encryptionText: {
+        color: COLORS.textMuted,
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.2,
+    },
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 120,
+        paddingBottom: 100,
     },
-    emptyIconCircle: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: COLORS.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    emptyText: {
-        color: COLORS.text,
-        fontSize: 22,
-        fontWeight: '800',
-        marginBottom: 8,
-    },
-    emptySubtext: {
+    loadingText: {
         color: COLORS.textSecondary,
-        fontSize: 15,
-        fontWeight: '500',
+        marginTop: 16,
+        fontSize: 14,
+        fontWeight: '600',
+        letterSpacing: 0.5,
+    },
+    inputContainer: {
+        backgroundColor: COLORS.background,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(148, 163, 184, 0.03)',
     },
 });
